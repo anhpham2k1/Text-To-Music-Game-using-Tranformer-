@@ -5,8 +5,8 @@ Hệ thống AI sinh nhạc nền cho game từ mô tả văn bản, sử dụng
 ## ✨ Features
 
 - **Text-to-Music Generation**: Sinh nhạc MIDI từ mô tả game prompt (mood, genre, scene, tempo, instrument, energy)
-- **Music Transformer**: Mô hình tự xây dựng (~8M parameters) với RPE và Cross-Attention
-- **REMI Tokenization**: Biểu diễn MIDI hiệu quả (~388 tokens vocabulary)
+- **Music Transformer**: Mô hình tự xây dựng (~7.7M parameters) với RoPE và Cross-Attention
+- **REMI Tokenization**: Biểu diễn MIDI hiệu quả (~336 tokens vocabulary)
 - **Multiple Sampling**: Temperature, Top-k, Top-p (Nucleus) sampling
 - **MIDI → WAV**: Render audio bằng FluidSynth + SoundFont
 - **Web Demo**: FastAPI backend + Premium dark-theme frontend
@@ -18,7 +18,7 @@ Hệ thống AI sinh nhạc nền cho game từ mô tả văn bản, sử dụng
 User Prompt → Text Encoder → Cross-Attention
                                     ↓
           [BOS] → Token Embedding → Decoder (×6) → Linear → Softmax → Next Token
-                   (+ Relative Position Encoding)
+                   (+ Rotary Position Encoding - RoPE)
                                     ↓
                               MIDI Tokens → MIDI File → FluidSynth → WAV
 ```
@@ -35,7 +35,7 @@ text-to-music/
 │   │   └── preprocessing.py     # Data filtering & labeling
 │   ├── model/
 │   │   ├── embedding.py         # Token + Relative Position embeddings
-│   │   ├── attention.py         # Self-Attention (RPE) + Cross-Attention
+│   │   ├── attention.py         # Self-Attention (RoPE, GQA) + Cross-Attention
 │   │   ├── layers.py            # FFN + DecoderBlock
 │   │   ├── prompt_encoder.py    # Attribute-based prompt encoder
 │   │   └── transformer.py       # Full Music Transformer model
@@ -164,11 +164,12 @@ Tất cả hyperparameters trong `config/config.yaml`:
 - **Architecture**: LLaMA-style Conditional Music Transformer (Decoder-only)
   - **Normalization**: RMSNorm (Root Mean Square Normalization)
   - **Feed-Forward**: SwiGLU (Swish-Gated Linear Unit)
-- **Parameters**: ~8.2M
-- **Attention**: FlashAttention (SDPA) + Relative Position Encoding (RPE)
+- **Parameters**: ~7.7M
+- **Attention**: FlashAttention (SDPA) + Rotary Position Encoding (RoPE)
+- **Advanced Optimizations**: GQA (Grouped Query Attention), QK-Norm, Weight Tying
 - **Conditioning**: Cross-Attention (Attribute / Text NLP Embedding)
 - **Tokenizer**: REMI (~336 vocab)
-- **GPU Requirement**: Tối ưu hóa cực tốt. Có thể train dễ dàng trên RTX 4060 (8GB VRAM) với Mixed Precision (AMP).
+- **GPU Requirement**: Tối ưu hóa cực tốt. Có thể train dễ dàng trên RTX 4060 (8GB VRAM) hoặc Colab T4.
 
 ## 📚 References
 
