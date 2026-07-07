@@ -87,18 +87,25 @@ pip install -r requirements.txt
 # Tạo thư mục
 mkdir -p data/raw data/processed data/labels
 
-# Download MIDI (MAESTRO mặc định hoặc thêm Lakh / VGMusic / GigaMIDI / MidiCaps)
+# Xem và tải dataset (hỗ trợ nhiều nguồn)
 python -m src.data.download_dataset
 
-# Hoặc thủ công: bỏ file MIDI vào data/raw/ (có thể subfolder)
-# Sau đó:
+# Hoặc thủ công: bỏ thêm MIDI vào data/raw/ (subfolders như game_midi/, lakh/ rất tốt)
+# Sau đó chạy:
 python -c "
 from src.data.preprocessing import filter_midi_files, generate_labels
 filter_midi_files('data/raw', 'data/processed')
 generate_labels('data/processed', 'data/labels/labels.json')
 "
 
-# Khuyến nghị: Kết hợp MAESTRO + VGMusic (game) + subset Lakh để đa dạng.
+# Khuyến nghị COMBO (theo yêu cầu của bạn):
+# VGMusic (game-specific) + MidiCaps (có text caption sẵn) 
+# + ComMU (có label có cấu trúc) + Tegridy/GigaMIDI (đa dạng + volume)
+#
+# - Tải vào data/raw/ (dùng subfolder)
+# - Chạy python -m src.data.download_dataset hoặc filter + labels
+# - Giữ MAESTRO nếu cần.
+# Xem: python -m src.data.preprocessing
 ```
 
 ### 3. Train Model

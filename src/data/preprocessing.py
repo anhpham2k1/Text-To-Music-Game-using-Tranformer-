@@ -89,14 +89,23 @@ def generate_labels(
     midi_dir: str,
     output_path: str,
     tokenizer: Optional[MidiTokenizer] = None,
+    captions: dict = None,           # filename -> caption text (from MidiCaps)
+    structured_labels: dict = None,  # filename -> structured dict (from ComMU etc.)
 ):
     """
     Sinh auto-labels cho tất cả MIDI files trong thư mục.
 
-    Output: JSON file {filename: {mood, genre, scene, tempo, instrument, energy}}
+    Hỗ trợ merge metadata/captions từ các nguồn:
+    - captions: Lưu caption text (dùng cho NLPPromptEncoder)
+    - structured_labels: Dùng trực tiếp thay auto-label nếu có
+
+    Output: JSON file {filename: {mood, genre, scene, tempo, instrument, energy, caption?}}
     """
     if tokenizer is None:
         tokenizer = MidiTokenizer()
+
+    captions = captions or {}
+    structured_labels = structured_labels or {}
 
     labels = {}
     count = 0
@@ -107,65 +116,170 @@ def generate_labels(
                 continue
 
             filepath = os.path.join(root, filename)
+            base_name = filename
+
             try:
-                label = tokenizer.auto_label(filepath)
+                # Ưu tiên structured label từ metadata
+                if base_name in structured_labels:
+                    label = structured_labels[base_name].copy()
+                else:
+                    label = tokenizer.auto_label(filepath)
+
+                # Thêm caption nếu có (từ MidiCaps)
+                if base_name in captions:
+                    label["caption"] = captions[base_name]
+
                 labels[filename] = label
                 count += 1
             except Exception as e:
                 print(f"  [SKIP] {filename}: {e}")
-                labels[filename] = tokenizer._default_labels()
+                label = tokenizer._default_labels()
+                if base_name in captions:
+                    label["caption"] = captions[base_name]
+                labels[filename] = label
 
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(labels, f, indent=2, ensure_ascii=False)
 
-    print(f"[Labels] Generated labels for {count} files -> {output_path}")
+    print(f"[Labels] Generated/merged labels for {count} files -> {output_path}")
     return labels
 
 
 def print_dataset_info():
-    """In thông tin các dataset có thể download. (Cập nhật 2026)"""
+    """In thông tin các dataset có thể download. (Cập nhật mới nhất)"""
     info = """
 ╔══════════════════════════════════════════════════════════════════════╗
-║                    RECOMMENDED DATASETS FOR GAME MUSIC AI            ║
+║           RECOMMENDED MIDI DATASETS FOR GAME MUSIC AI (2026)         ║
 ╠══════════════════════════════════════════════════════════════════════╣
 ║                                                                      ║
-║  1. MAESTRO v3 (Piano - High Quality, giữ lại cho reference)         ║
-║     URL: https://magenta.tensorflow.org/datasets/maestro              ║
+║  1. MAESTRO v3 (Piano high-quality, reference only)                  ║
+║     https://magenta.tensorflow.org/datasets/maestro                   ║
 ║                                                                      ║
-║  2. Lakh MIDI Dataset (Lớn, đa thể loại - KHUYẾN NGHỊ)               ║
-║     URL: https://colinraffel.com/projects/lmd/                        ║
-║     Download: LMD-full (176k files) hoặc clean subset                 ║
-║     HF mirror: Kaggle "lakh-midi-clean"                               ║
+║  2. Lakh MIDI Dataset (Large, multi-genre - HIGHLY RECOMMENDED)      ║
+║     https://colinraffel.com/projects/lmd/                             ║
+║     LMD-full (~176k files) or clean subset on Kaggle                  ║
 ║                                                                      ║
-║  3. GigaMIDI (LỚN NHẤT - 1.4M+ files, đa dạng)                       ║
+║  3. GigaMIDI (Largest ~1.4M-2M+ files, diverse + annotations)        ║
 ║     HF: https://huggingface.co/datasets/Metacreation/GigaMIDI         ║
-║     Rất tốt để lọc theo instrument/genre                              ║
+║     Great for filtering by instrument/genre/expressive                ║
 ║                                                                      ║
-║  4. MidiCaps (TỐT NHẤT cho Text-to-Music)                            ║
-║     168k MIDI + text captions (mood, genre, instrument...)            ║
+║  4. MidiCaps (BEST for Text-to-Music - 168k MIDI + rich captions)    ║
 ║     HF: https://huggingface.co/datasets/amaai-lab/MidiCaps            ║
+║     Captions include mood, genre, instruments, structure - perfect!   ║
 ║                                                                      ║
-║  5. Video Game Music (VGMusic) - PHÙ HỢP NHẤT cho game background    ║
-║     URL: https://www.vgmusic.com/ (~31k+ game MIDI files)             ║
-║     Tải thủ công theo hệ máy hoặc thể loại                            ║
+║  5. VGMusic (Video Game Music - MOST RELEVANT for game BGM)          ║
+║     https://www.vgmusic.com/ (~31k+ game MIDI files)                  ║
+║     Manual download by system/genre - highly recommended              ║
 ║                                                                      ║
-║  6. Tegridy / LAKH MuseNet / ComMU / SymphonyNet (các collection)     ║
-║     Tìm trên GitHub "Tegridy MIDI Dataset" hoặc HF                    ║
+║  6. Tegridy MIDI Dataset (Curated for AI/MIR, multi-instrumental)    ║
+║     https://github.com/asigalov61/Tegridy-MIDI-Dataset                ║
+║     Many subsets (piano, full, etc.) + metadata                       ║
 ║                                                                      ║
-║  USAGE (cập nhật):                                                   ║
-║  1. Tải MIDI vào data/raw/ (có thể tạo subfolder: game_midi, lakh)   ║
+║  7. MetaMIDI Dataset (~463k files, diverse genres)                   ║
+║     Base for GigaMIDI, good variety                                   ║
+║                                                                      ║
+║  8. ComMU (Conditional music - labels for genre/mood/instruments)    ║
+║     https://github.com/POZAlabs/ComMU-code                            ║
+║     Excellent for structured prompts like your mood/genre/scene       ║
+║                                                                      ║
+║  9. VGMIDI (Video Game piano arrangements + emotion labels)          ║
+║     https://github.com/lucasnfe/vgmidi                                ║
+║     200 labeled + 3.8k unlabeled game tracks                          ║
+║                                                                      ║
+║  10. SymphonyNet (Orchestral/symphonic multi-instrument)             ║
+║      Good for epic/game orchestral music                              ║
+║                                                                      ║
+║  USAGE:                                                              ║
+║  1. Download MIDI → data/raw/ (use subfolders: game/, lakh/, etc.)   ║
 ║  2. python -m src.data.preprocessing                                 ║
-║  3. Hoặc thủ công:                                                   ║
+║  3. Or manually:                                                     ║
 ║     python -c "from src.data.preprocessing import filter_midi_files, generate_labels; filter_midi_files('data/raw', 'data/processed'); generate_labels('data/processed', 'data/labels/labels.json')" 
 ║                                                                      ║
-║  LƯU Ý: Sau khi thêm data mới, chạy lại filter + generate_labels.    ║
-║  Dùng MidiCaps hoặc VGMusic để tăng đa dạng cho game music.          ║
+║  RECOMMENDED COMBO: VGMusic (game) + MidiCaps (captions) +       ║
+║  ComMU (structured labels) + Tegridy/GigaMIDI (volume/diversity)     ║
+║                                                                      ║
+║  TIP: Place in subfolders (data/raw/vgmusic, data/raw/midicaps etc.) ║
+║  Run filter + labels after adding. Use captions from MidiCaps/ComMU  ║
+║  for better NLP conditioning or map to your mood/genre/etc.          ║
 ║                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════╝
 """
     print(info)
 
+
+def merge_and_process_datasets(raw_dirs, processed_dir="data/processed", labels_file="data/labels/labels.json"):
+    """
+    Merge MIDI from multiple sources for the recommended combo:
+    VGMusic + MidiCaps + ComMU + Tegridy/GigaMIDI.
+    Now supports merging metadata/captions:
+    - If a subdir has 'metadata.json' or 'captions.json', it will be used
+      to populate better structured labels or store captions.
+    - Captions from MidiCaps are saved into labels for NLP conditioning.
+    Example:
+      merge_and_process_datasets([
+          'data/raw/vgmusic',
+          'data/raw/midicaps',   # expects captions.json or from HF
+          'data/raw/commu',
+          'data/raw/tegridy',
+          'data/raw/gigamidi'
+      ])
+    """
+    os.makedirs(processed_dir, exist_ok=True)
+    print(f"[Merge] Merging from sources: {raw_dirs}")
+
+    # Load any metadata/captions from sources
+    all_captions = {}      # filename -> caption text (from MidiCaps etc.)
+    all_structured = {}    # filename -> structured dict (from ComMU etc.)
+
+    for raw in raw_dirs:
+        if not os.path.exists(raw):
+            print(f"  [Skip] {raw} not found")
+            continue
+
+        # Look for metadata/captions in this source
+        meta_files = [
+            os.path.join(raw, 'metadata.json'),
+            os.path.join(raw, 'captions.json'),
+            os.path.join(raw, 'labels.json'),
+        ]
+        for mf in meta_files:
+            if os.path.exists(mf):
+                try:
+                    with open(mf, 'r', encoding='utf-8') as f:
+                        meta = json.load(f)
+                    if isinstance(meta, dict):
+                        for k, v in meta.items():
+                            base = os.path.basename(k)
+                            if isinstance(v, str):
+                                all_captions[base] = v
+                            elif isinstance(v, dict):
+                                all_structured[base] = v
+                    print(f"  [Metadata] Loaded from {mf}")
+                except Exception as e:
+                    print(f"  [Warn] Could not load {mf}: {e}")
+
+        # Copy MIDI files
+        for root, _, files in os.walk(raw):
+            for f in files:
+                if f.lower().endswith(('.mid', '.midi')):
+                    src = os.path.join(root, f)
+                    dest_name = f
+                    dest = os.path.join(processed_dir, dest_name)
+                    i = 1
+                    while os.path.exists(dest):
+                        base, ext = os.path.splitext(dest_name)
+                        dest = os.path.join(processed_dir, f"{base}_{i}{ext}")
+                        i += 1
+                    shutil.copy2(src, dest)
+
+    print(f"[Merge] MIDI files copied to {processed_dir}")
+
+    # Generate labels, preferring provided metadata
+    print("[Merge] Generating labels (preferring provided metadata/captions)...")
+    generate_labels(processed_dir, labels_file, captions=all_captions, structured_labels=all_structured)
+
+    print("[Merge] Merge complete with metadata integration!")
 
 if __name__ == "__main__":
     print_dataset_info()
