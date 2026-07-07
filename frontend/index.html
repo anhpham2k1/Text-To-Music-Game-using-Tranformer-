@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Text-to-Music: Sinh nhạc nền cho game bằng AI">
+    <title>🎵 Text-to-Music Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <!-- Background animation -->
+    <div class="bg-animation">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+        <div class="bg-orb bg-orb-3"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <span class="logo-icon">♪</span>
+                <h1>Text-to-Music</h1>
+            </div>
+            <p class="subtitle">Sinh nhạc nền cho game bằng Generative AI</p>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Prompt Form -->
+            <section class="card prompt-card" id="prompt-section">
+                <h2 class="card-title">
+                    <span class="card-icon">🎮</span>
+                    Game Music Prompt
+                </h2>
+
+                <form id="music-form">
+                    <div class="form-grid">
+                        <!-- Mood -->
+                        <div class="form-group">
+                            <label for="mood">Mood (Tâm trạng)</label>
+                            <select id="mood" name="mood">
+                                <option value="happy" selected>😊 Happy</option>
+                                <option value="sad">😢 Sad</option>
+                                <option value="tense">😰 Tense</option>
+                                <option value="peaceful">😌 Peaceful</option>
+                                <option value="epic">⚔️ Epic</option>
+                                <option value="mysterious">🔮 Mysterious</option>
+                                <option value="dark">🌑 Dark</option>
+                                <option value="heroic">🦸 Heroic</option>
+                                <option value="nostalgic">💭 Nostalgic</option>
+                                <option value="playful">🎪 Playful</option>
+                            </select>
+                        </div>
+
+                        <!-- Genre -->
+                        <div class="form-group">
+                            <label for="genre">Genre (Thể loại)</label>
+                            <select id="genre" name="genre">
+                                <option value="fantasy" selected>🏰 Fantasy</option>
+                                <option value="sci-fi">🚀 Sci-Fi</option>
+                                <option value="horror">👻 Horror</option>
+                                <option value="adventure">🗺️ Adventure</option>
+                                <option value="rpg">⚔️ RPG</option>
+                                <option value="puzzle">🧩 Puzzle</option>
+                                <option value="platformer">🎮 Platformer</option>
+                                <option value="simulation">🏙️ Simulation</option>
+                                <option value="fighting">🥊 Fighting</option>
+                                <option value="racing">🏎️ Racing</option>
+                            </select>
+                        </div>
+
+                        <!-- Scene -->
+                        <div class="form-group">
+                            <label for="scene">Scene (Bối cảnh)</label>
+                            <select id="scene" name="scene">
+                                <option value="forest">🌳 Forest</option>
+                                <option value="dungeon">🏚️ Dungeon</option>
+                                <option value="village" selected>🏘️ Village</option>
+                                <option value="castle">🏰 Castle</option>
+                                <option value="ocean">🌊 Ocean</option>
+                                <option value="space">🌌 Space</option>
+                                <option value="mountain">⛰️ Mountain</option>
+                                <option value="desert">🏜️ Desert</option>
+                                <option value="city">🌆 City</option>
+                                <option value="battlefield">⚔️ Battlefield</option>
+                            </select>
+                        </div>
+
+                        <!-- Tempo -->
+                        <div class="form-group">
+                            <label for="tempo">Tempo (Tốc độ)</label>
+                            <select id="tempo" name="tempo">
+                                <option value="very_slow">🐢 Very Slow</option>
+                                <option value="slow">🚶 Slow</option>
+                                <option value="moderate" selected>🏃 Moderate</option>
+                                <option value="fast">🏎️ Fast</option>
+                                <option value="very_fast">⚡ Very Fast</option>
+                            </select>
+                        </div>
+
+                        <!-- Instrument -->
+                        <div class="form-group">
+                            <label for="instrument">Instrument (Nhạc cụ)</label>
+                            <select id="instrument" name="instrument">
+                                <option value="piano" selected>🎹 Piano</option>
+                                <option value="strings">🎻 Strings</option>
+                                <option value="brass">🎺 Brass</option>
+                                <option value="flute">🪈 Flute</option>
+                                <option value="guitar">🎸 Guitar</option>
+                                <option value="organ">🎹 Organ</option>
+                                <option value="synth">🎛️ Synth</option>
+                                <option value="full_orchestra">🎼 Full Orchestra</option>
+                            </select>
+                        </div>
+
+                        <!-- Energy -->
+                        <div class="form-group">
+                            <label for="energy">Energy (Năng lượng)</label>
+                            <select id="energy" name="energy">
+                                <option value="calm">🧘 Calm</option>
+                                <option value="low">🌙 Low</option>
+                                <option value="medium" selected>☀️ Medium</option>
+                                <option value="high">🔥 High</option>
+                                <option value="intense">💥 Intense</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Advanced Settings -->
+                    <details class="advanced-settings">
+                        <summary>⚙️ Advanced Settings</summary>
+                        <div class="form-grid form-grid-3">
+                            <div class="form-group">
+                                <label for="temperature">Temperature</label>
+                                <input type="range" id="temperature" min="0.1" max="2.0" step="0.05" value="0.85">
+                                <span class="range-value" id="temp-value">0.85</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="top_p">Top-p (Nucleus)</label>
+                                <input type="range" id="top_p" min="0.1" max="1.0" step="0.05" value="0.9">
+                                <span class="range-value" id="topp-value">0.9</span>
+                            </div>
+                            <div class="form-group">
+                                <label for="max_length">Max Tokens</label>
+                                <input type="number" id="max_length" min="100" max="4096" value="2048">
+                            </div>
+                        </div>
+                    </details>
+
+                    <!-- Generate Button -->
+                    <button type="submit" class="btn-generate" id="btn-generate">
+                        <span class="btn-icon">🎵</span>
+                        <span class="btn-text">Generate Music</span>
+                        <div class="btn-loader" id="btn-loader"></div>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Result Section -->
+            <section class="card result-card" id="result-section" style="display: none;">
+                <h2 class="card-title">
+                    <span class="card-icon">🎼</span>
+                    Generated Music
+                </h2>
+
+                <!-- Prompt Display -->
+                <div class="prompt-display" id="prompt-display"></div>
+
+                <!-- Music Info -->
+                <div class="music-info" id="music-info">
+                    <div class="info-item">
+                        <span class="info-label">Duration</span>
+                        <span class="info-value" id="info-duration">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Notes</span>
+                        <span class="info-value" id="info-notes">—</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Request ID</span>
+                        <span class="info-value" id="info-id">—</span>
+                    </div>
+                </div>
+
+                <!-- Audio Player -->
+                <div class="audio-player-wrapper">
+                    <audio id="audio-player" controls></audio>
+                </div>
+
+                <!-- Download Buttons -->
+                <div class="download-buttons">
+                    <a class="btn-download btn-midi" id="btn-midi" href="#" download>
+                        <span>⬇</span> Download MIDI
+                    </a>
+                    <a class="btn-download btn-wav" id="btn-wav" href="#" download>
+                        <span>⬇</span> Download WAV
+                    </a>
+                </div>
+            </section>
+
+            <!-- Error Section -->
+            <section class="card error-card" id="error-section" style="display: none;">
+                <h2 class="card-title">
+                    <span class="card-icon">⚠️</span>
+                    Error
+                </h2>
+                <p id="error-message"></p>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Text-to-Music Generator — Đồ án Generative AI</p>
+            <p class="footer-tech">PyTorch • Music Transformer • FastAPI</p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
